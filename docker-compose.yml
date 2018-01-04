@@ -2,36 +2,36 @@ version: '3'
 
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-platinum:6.1.1
+    image: docker.elastic.co/elasticsearch/elasticsearch-platinum:${TAG}
     environment:
       http.host: 0.0.0.0
       transport.host: 127.0.0.1
-      ELASTIC_PASSWORD: foobarbaz
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     ports:
       - "9200:9200"
     networks:
-      - 'stack'
+      - 'elk'
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.1.1
+    image: docker.elastic.co/kibana/kibana:${TAG}
     environment:
       ELASTICSEARCH_USERNAME: kibana
-      ELASTICSEARCH_PASSWORD: foobarbaz
+      ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD}
     ports:
       - "5601:5601"
     networks:
-      - 'stack'
+      - 'elk'
     depends_on:
       - 'elasticsearch'
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:6.1.1
+    image: docker.elastic.co/logstash/logstash:${TAG}
     environment:
-      - 'xpack.monitoring.elasticsearch.password=foobarbaz'
+      - 'xpack.monitoring.elasticsearch.password=${ELASTIC_PASSWORD}'
     volumes:
-      - /opt/elk/config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     networks:
-      - 'stack'
+      - 'elk'
     depends_on:
       - 'elasticsearch'
       - 'setup_logstash'
@@ -39,27 +39,27 @@ services:
   setup_logstash:
     image: centos:7
     volumes:
-      - /opt/elk/scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro
+      - ./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro
     command: '/bin/bash -c cat /usr/local/bin/setup-logstash.sh | tr -d "\r" | bash'
     environment:
-      ELASTIC_PASSWORD: foobarbaz
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     networks:
-      - 'stack'
+      - 'elk'
     depends_on:
       - 'elasticsearch'
 
   setup_kibana:
     image: centos:7
     volumes:
-      - /opt/elk/scripts/setup-kibana.sh:/usr/local/bin/setup-kibana.sh:ro
+      - ./scripts/setup-kibana.sh:/usr/local/bin/setup-kibana.sh:ro
     command: '/bin/bash -c cat /usr/local/bin/setup-kibana.sh | tr -d "\r" | bash'
     environment:
-      ELASTIC_PASSWORD: foobarbaz
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     networks:
-      - 'stack'
+      - 'elk'
     depends_on:
       - 'elasticsearch'
 
 networks:
-  stack:
+  elk:
     external: false
