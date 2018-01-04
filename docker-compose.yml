@@ -2,7 +2,7 @@ version: '3'
 
 services:
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-platinum:6.1.1
+    image: docker.elastic.co/elasticsearch/elasticsearch-platinum:${TAG}
     environment:
       http.host: 0.0.0.0
       transport.host: 127.0.0.1
@@ -13,7 +13,7 @@ services:
       - 'elk'
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:6.1.1
+    image: docker.elastic.co/kibana/kibana:${TAG}
     environment:
       ELASTICSEARCH_USERNAME: kibana
       ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD}
@@ -25,11 +25,11 @@ services:
       - 'elasticsearch'
 
   logstash:
-    image: docker.elastic.co/logstash/logstash:6.1.1
+    image: docker.elastic.co/logstash/logstash:${TAG}
     environment:
       - 'xpack.monitoring.elasticsearch.password=${ELASTIC_PASSWORD}'
     volumes:
-      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - /opt/elk/config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
     networks:
       - 'elk'
     depends_on:
@@ -39,7 +39,7 @@ services:
   setup_logstash:
     image: centos:7
     volumes:
-      - ./scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro
+      - /opt/elk/scripts/setup-logstash.sh:/usr/local/bin/setup-logstash.sh:ro
     command: '/bin/bash -c cat /usr/local/bin/setup-logstash.sh | tr -d "\r" | bash'
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
@@ -51,7 +51,7 @@ services:
   setup_kibana:
     image: centos:7
     volumes:
-      - ./scripts/setup-kibana.sh:/usr/local/bin/setup-kibana.sh:ro
+      - /opt/elk/scripts/setup-kibana.sh:/usr/local/bin/setup-kibana.sh:ro
     command: '/bin/bash -c cat /usr/local/bin/setup-kibana.sh | tr -d "\r" | bash'
     environment:
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
